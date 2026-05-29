@@ -9,7 +9,7 @@ from app.models import sessions, events
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, or_, select, exists
 
 from app.auth import verify_basic_auth
 
@@ -120,6 +120,7 @@ async def sessions_list(
     status: str | None = None,
     has_error: bool = False,
     has_operator: bool = False,
+    search: str | None = None,
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
     username: str = Depends(verify_basic_auth),
@@ -142,6 +143,17 @@ async def sessions_list(
         conditions.append(sessions.c.has_error == 1)
     if has_operator:
         conditions.append(sessions.c.transferred_to_operator == 1)
+    if search:
+        pat = f"%{search}%"
+        conditions.append(
+            or_(
+                sessions.c.entry_query.like(pat),
+                sessions.c.user_from.like(pat),
+                exists().where(
+                    and_(events.c.session_id == sessions.c.id, events.c.data.like(pat))
+                ),
+            )
+        )
 
     where_clause = and_(*conditions) if conditions else True
 
@@ -170,6 +182,7 @@ async def sessions_list(
         "status": status,
         "has_error": has_error,
         "has_operator": has_operator,
+        "search": search,
     }
 
     # Параметры пагинации (без offset)
@@ -180,6 +193,7 @@ async def sessions_list(
         "status": status,
         "has_error": has_error,
         "has_operator": has_operator,
+        "search": search,
         "limit": limit,
     }
     pagination_prev = _build_qs({**base_params, "offset": max(0, offset - limit)})

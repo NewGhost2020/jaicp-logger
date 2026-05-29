@@ -38,6 +38,9 @@
             <input type="checkbox" name="has_operator" value="true" {% if filters.has_operator %}checked{% endif %} style="margin: 0;">
             Только с оператором
         </label>
+    </div>
+    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+        <input type="text" name="search" placeholder="Поиск по тексту событий..." value="{{ filters.search or '' }}" style="flex: 1; max-width: 400px; margin: 0;">
         <button type="submit" style="margin: 0; padding: 0.4rem 1.2rem; width: auto;">Найти</button>
     </div>
 </form>
