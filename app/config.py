@@ -3,8 +3,9 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     log_ingest_token: str
-    basic_auth_user: str
-    basic_auth_pass_hash: str
+    basic_auth_user: str = ""
+    basic_auth_pass_hash: str = ""
+    basic_auth_users: str = "{}"  # JSON: {"login": "bcrypt_hash", ...}
     database_url: str = "sqlite+aiosqlite:///data/jaicp_logs.db"
     tz_display: str = "Europe/Moscow"
     session_abandon_hours: float = 2

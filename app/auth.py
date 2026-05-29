@@ -1,6 +1,21 @@
+import base64
+import json
 import bcrypt
 from fastapi import HTTPException, status, Header
 from app.config import settings
+
+
+def _get_users() -> dict[str, str]:
+    """Возвращает словарь {логин: хэш} из BASIC_AUTH_USERS, с fallback на старые переменные."""
+    try:
+        users = json.loads(settings.basic_auth_users)
+        if users:
+            return users
+    except (json.JSONDecodeError, TypeError):
+        pass
+    if settings.basic_auth_user and settings.basic_auth_pass_hash:
+        return {settings.basic_auth_user: settings.basic_auth_pass_hash}
+    return {}
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -27,7 +42,6 @@ async def verify_basic_auth(authorization: str = Header(None)) -> str:
             headers={"WWW-Authenticate": "Basic"},
         )
 
-    import base64
     try:
         encoded_creds = authorization.split(" ")[1]
         decoded = base64.b64decode(encoded_creds).decode("utf-8")
@@ -38,7 +52,9 @@ async def verify_basic_auth(authorization: str = Header(None)) -> str:
             detail="Invalid auth header format",
         )
 
-    if username != settings.basic_auth_user or not verify_password(password, settings.basic_auth_pass_hash):
+    users = _get_users()
+    user_hash = users.get(username)
+    if not user_hash or not verify_password(password, user_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid credentials",
