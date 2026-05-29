@@ -54,14 +54,22 @@ async def ingest_events(
             data = start_event.data if start_event else {}
             first_ts = min((e.ts for e in body.events), default=_now_iso())
 
+            entry_query = data.get("entryQuery") or None
+            if not entry_query:
+                first_input = next((e for e in body.events if e.type == "user_input" and e.data.get("text")), None)
+                if first_input:
+                    entry_query = first_input.data["text"]
+
+            user_from = data.get("userFrom") or data.get("userId") or None
+
             await conn.execute(
                 sessions.insert().values(
                     id=body.session_id,
                     bot_id=body.bot_id,
                     channel_type=data.get("channelType"),
                     user_id=data.get("userId"),
-                    user_from=data.get("userFrom"),
-                    entry_query=data.get("entryQuery"),
+                    user_from=user_from,
+                    entry_query=entry_query,
                     status="active",
                     started_at=first_ts,
                     last_event_at=first_ts,
