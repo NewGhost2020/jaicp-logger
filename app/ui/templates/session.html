@@ -1,60 +1,136 @@
 {% extends "base.html" %}
 
-{% block title %}Сессия — JAICP Логи{% endblock %}
+{% block title %}Сессия {{ session.id if session else '' }} — JAICP Logs{% endblock %}
 
 {% block content %}
-<h1>Сессия</h1>
+<p><a href="/">← Назад к сессиям</a></p>
 
 {% if session %}
-<h2><code>{{ session.id }}</code></h2>
+<h1>Сессия <code style="font-size: 0.75em;">{{ session.id }}</code></h1>
 
-<div class="grid">
-    <div>
-        <strong>Бот:</strong> {{ session.bot_id }}
-    </div>
-    <div>
-        <strong>Статус:</strong> {{ session.status }}
-    </div>
-    <div>
-        <strong>Пользователь:</strong> {{ session.user_id or "—" }}
-    </div>
-    <div>
-        <strong>Канал:</strong> {{ session.channel_type or "—" }}
-    </div>
+<table style="max-width: 700px; margin-bottom: 2rem;">
+    <tbody>
+        <tr><th>Bot</th><td>{{ session.bot_id }}</td></tr>
+        <tr><th>Channel</th><td>{{ session.channel_type or '—' }}</td></tr>
+        <tr><th>User</th><td>{{ session.user_from or session.user_id or '—' }}</td></tr>
+        <tr><th>Started</th><td>{{ session.started_at_msk }}</td></tr>
+        <tr><th>Duration</th><td>{{ session.duration_str }}</td></tr>
+        <tr><th>Status</th><td>
+            {% if session.status == 'active' %}🟢 Активна
+            {% elif session.status == 'ended' %}✅ Завершена
+            {% elif session.status == 'abandoned' %}⌛ Заброшена
+            {% else %}{{ session.status }}{% endif %}
+        </td></tr>
+        <tr><th>Last state</th><td>{{ session.last_state or '—' }}</td></tr>
+        <tr><th>Last event</th><td>{{ session.last_event_at or '—' }}</td></tr>
+        <tr><th>Entry query</th><td>{{ session.entry_query or '—' }}</td></tr>
+        <tr><th>Flags</th><td>
+            {% if session.has_error %}🔴 Ошибка {% endif %}
+            {% if session.transferred_to_operator %}👨‍💼 Оператор{% endif %}
+            {% if not session.has_error and not session.transferred_to_operator %}—{% endif %}
+        </td></tr>
+    </tbody>
+</table>
+
+<h2>События</h2>
+
+<div style="margin-bottom: 1rem;">
+    <strong>Типы:</strong>
+    {% for t in ['session_start','user_input','bot_reply','state_enter','http_call','log','error','operator_msg','operator_transfer','session_end'] %}
+    <label style="display: inline-flex; align-items: center; gap: 0.3rem; margin-right: 0.75rem; font-size: 0.85rem;">
+        <input type="checkbox" class="type-filter" value="{{ t }}" checked style="margin: 0;">
+        {{ t }}
+    </label>
+    {% endfor %}
 </div>
 
-<hr>
-
-<h3>События</h3>
+<div style="margin-bottom: 1rem;">
+    <input type="text" id="search" placeholder="Поиск в событиях..." style="max-width: 400px; margin: 0;">
+</div>
 
 {% if events %}
+<figure>
 <table>
     <thead>
         <tr>
-            <th>#</th>
+            <th>+время</th>
+            <th>Иконка</th>
             <th>Тип</th>
-            <th>Состояние</th>
-            <th>Время</th>
+            <th>State</th>
+            <th>Детали</th>
         </tr>
     </thead>
     <tbody>
-        {% for event in events %}
-        <tr>
-            <td>{{ event.seq }}</td>
-            <td><code>{{ event.type }}</code></td>
-            <td>{{ event.state or "—" }}</td>
-            <td>{{ event.ts }}</td>
+        {% for e in events %}
+        {% set icon = {
+            'session_start': '📌',
+            'user_input': '💬',
+            'bot_reply': '🤖',
+            'state_enter': '➡️',
+            'http_call': '🌐',
+            'log': '📝',
+            'error': '🔴',
+            'operator_msg': '👨‍💼',
+            'operator_transfer': '👨‍💼➡️',
+            'session_end': '✅'
+        }.get(e.type, '•') %}
+        {% if e.type == 'user_input' or e.type == 'bot_reply' %}
+            {% set detail_short = (e.data.get('text') or '')[:100] %}
+            {% set detail_full = e.data.get('text') or '' %}
+        {% elif e.type == 'http_call' %}
+            {% set detail_short = ((e.data.get('method') or '') + ' ' + (e.data.get('url') or '') + ' → ' + (e.data.get('status') | string if e.data.get('status') else ''))[:100] %}
+            {% set detail_full = detail_short + (' ❌ ' + (e.data.get('error') or '') if e.data.get('error') else '') %}
+        {% elif e.type == 'log' or e.type == 'error' %}
+            {% set detail_short = (e.data.get('message') or '')[:150] %}
+            {% set detail_full = e.data.get('message') or '' %}
+        {% else %}
+            {% set detail_short = (e.data | tojson)[:150] %}
+            {% set detail_full = e.data | tojson %}
+        {% endif %}
+        <tr data-type="{{ e.type }}" data-text="{{ detail_full | lower }}">
+            <td style="white-space: nowrap;">{{ e.offset_str }}</td>
+            <td>{{ icon }}</td>
+            <td><code>{{ e.type }}</code></td>
+            <td><code style="font-size: 0.8em;">{{ e.state or '—' }}</code></td>
+            <td>
+                {% if detail_full | length > 150 %}
+                <details>
+                    <summary>{{ detail_short }}…</summary>
+                    <pre style="white-space: pre-wrap; word-break: break-all; font-size: 0.8em; margin: 0.5rem 0;">{{ detail_full }}</pre>
+                </details>
+                {% else %}
+                {{ detail_full }}
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+</figure>
 {% else %}
-<p><em>Нет событий.</em></p>
+<p>Нет событий.</p>
 {% endif %}
 
 {% else %}
-<p><em>Сессия не найдена.</em></p>
+<p>Сессия не найдена.</p>
 {% endif %}
 
-<p><a href="/">← Назад к сессиям</a></p>
+<script>
+document.querySelectorAll('.type-filter').forEach(cb => {
+    cb.addEventListener('change', applyFilters);
+});
+
+function applyFilters() {
+    const checked = [...document.querySelectorAll('.type-filter:checked')].map(cb => cb.value);
+    const search = document.getElementById('search').value.toLowerCase();
+    document.querySelectorAll('tr[data-type]').forEach(row => {
+        const typeMatch = checked.includes(row.dataset.type);
+        const textMatch = !search || row.dataset.text.includes(search);
+        row.style.display = typeMatch && textMatch ? '' : 'none';
+    });
+}
+
+document.getElementById('search').addEventListener('input', applyFilters);
+</script>
+
 {% endblock %}

@@ -1,36 +1,98 @@
 {% extends "base.html" %}
 
-{% block title %}Сессии — JAICP Логи{% endblock %}
+{% block title %}Сессии — JAICP Logs{% endblock %}
 
 {% block content %}
 <h1>Сессии</h1>
 
+<form method="get" action="/" style="margin-bottom: 1.5rem;">
+    <div class="grid">
+        <label>
+            Бот
+            <input type="text" name="bot_id" placeholder="Бот" value="{{ filters.bot_id or '' }}">
+        </label>
+        <label>
+            С
+            <input type="date" name="from" value="{{ filters.from or from_default }}">
+        </label>
+        <label>
+            По
+            <input type="date" name="to" value="{{ filters.to or to_default }}">
+        </label>
+        <label>
+            Статус
+            <select name="status">
+                <option value="" {% if not filters.status %}selected{% endif %}>Все</option>
+                <option value="active" {% if filters.status == 'active' %}selected{% endif %}>🟢 Активные</option>
+                <option value="ended" {% if filters.status == 'ended' %}selected{% endif %}>✅ Завершённые</option>
+                <option value="abandoned" {% if filters.status == 'abandoned' %}selected{% endif %}>⌛ Заброшенные</option>
+            </select>
+        </label>
+    </div>
+    <div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+            <input type="checkbox" name="has_error" value="true" {% if filters.has_error %}checked{% endif %} style="margin: 0;">
+            Только с ошибкой
+        </label>
+        <label style="display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+            <input type="checkbox" name="has_operator" value="true" {% if filters.has_operator %}checked{% endif %} style="margin: 0;">
+            Только с оператором
+        </label>
+        <button type="submit" style="margin: 0; padding: 0.4rem 1.2rem; width: auto;">Найти</button>
+    </div>
+</form>
+
 {% if sessions %}
+<p>Найдено: <strong>{{ total }}</strong> сессий</p>
+
+<figure>
 <table>
     <thead>
         <tr>
-            <th>ID сессии</th>
+            <th>Время</th>
+            <th>Длит.</th>
             <th>Бот</th>
-            <th>Статус</th>
-            <th>Начало</th>
+            <th>Юзер</th>
+            <th>Запрос</th>
             <th>События</th>
-            <th>Действие</th>
+            <th>Статус</th>
         </tr>
     </thead>
     <tbody>
-        {% for session in sessions %}
+        {% for s in sessions %}
         <tr>
-            <td><code>{{ session.id }}</code></td>
-            <td>{{ session.bot_id }}</td>
-            <td>{{ session.status }}</td>
-            <td>{{ session.started_at }}</td>
-            <td>{{ session.events_count }}</td>
-            <td><a href="/session/{{ session.id }}">Просмотр</a></td>
+            <td><a href="/session/{{ s.id }}">{{ s.started_at_msk }}</a></td>
+            <td>{{ s.duration_str }}</td>
+            <td>{{ s.bot_id }}</td>
+            <td>{{ (s.user_from or s.user_id or '')[:20] }}</td>
+            <td>{{ (s.entry_query or '')[:40] }}</td>
+            <td>{{ s.events_count }}</td>
+            <td>
+                {% if s.status == 'active' %}🟢 Активна
+                {% elif s.status == 'ended' %}✅ Завершена
+                {% elif s.status == 'abandoned' %}⌛ Заброшена
+                {% else %}{{ s.status }}{% endif %}
+                {% if s.has_error %}<span class="tag">🔴</span>{% endif %}
+                {% if s.transferred_to_operator %}<span class="tag">👨‍💼</span>{% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+</figure>
+
+<div style="display: flex; gap: 1rem; align-items: center; margin-top: 1rem;">
+    {% if offset > 0 %}
+    <a href="/?{{ pagination_prev }}">← Пред.</a>
+    {% endif %}
+    <span>{{ offset + 1 }}–{{ [offset + limit, total] | min }} из {{ total }}</span>
+    {% if total > offset + limit %}
+    <a href="/?{{ pagination_next }}">След. →</a>
+    {% endif %}
+</div>
+
 {% else %}
-<p><em>Нет сессий.</em></p>
+<p>Нет сессий.</p>
 {% endif %}
+
 {% endblock %}
