@@ -37,7 +37,7 @@ def make_basic_auth_header(username: str, password: str) -> dict:
 class TestHealthCheck:
     """Тесты health check эндпоинта."""
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_health_check(self, client):
         """GET /api/v1/health возвращает 200 и status ok."""
         response = await client.get("/api/v1/health")
@@ -48,7 +48,7 @@ class TestHealthCheck:
 class TestIngestAuth:
     """Тесты аутентификации ingest эндпоинта."""
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_ingest_requires_token(self, client):
         """POST /api/v1/events без X-Bot-Token возвращает 401."""
         batch = make_batch(
@@ -58,7 +58,7 @@ class TestIngestAuth:
         response = await client.post("/api/v1/events", json=batch)
         assert response.status_code == 401
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_ingest_wrong_token(self, client):
         """POST /api/v1/events с неправильным X-Bot-Token возвращает 401."""
         batch = make_batch(
@@ -76,7 +76,7 @@ class TestIngestAuth:
 class TestIngestSessionCreation:
     """Тесты создания сессии при ingest."""
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_ingest_creates_session(self, client):
         """POST создаёт сессию из session_start события."""
         from test.conftest import TEST_TOKEN, TEST_USER, TEST_PASSWORD
@@ -136,7 +136,7 @@ class TestIngestSessionCreation:
 class TestIngestDedup:
     """Тесты дедупликации батчей и событий."""
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_batch_dedup(self, client):
         """Второй запрос с одинаковым batch_id возвращает deduped count."""
         from test.conftest import TEST_TOKEN
@@ -174,7 +174,7 @@ class TestIngestDedup:
         assert response2.json()["accepted"] == 0
         assert response2.json()["deduped"] == 3
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_event_dedup(self, client):
         """События с одинаковым seq пропускаются."""
         from test.conftest import TEST_TOKEN
@@ -224,7 +224,7 @@ class TestIngestDedup:
 class TestIngestSessionEnd:
     """Тесты обновления статуса сессии при завершении."""
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_session_end_updates_status(self, client):
         """Событие session_end обновляет status и duration_ms."""
         from test.conftest import TEST_TOKEN, TEST_USER, TEST_PASSWORD
@@ -266,7 +266,7 @@ class TestIngestSessionEnd:
 class TestIngestErrorFlag:
     """Тесты установки флага ошибки."""
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_error_flag(self, client):
         """Событие типа error устанавливает has_error флаг."""
         from test.conftest import TEST_TOKEN, TEST_USER, TEST_PASSWORD
@@ -304,7 +304,7 @@ class TestIngestErrorFlag:
 class TestIngestOperatorTransfer:
     """Тесты установки флага передачи оператору."""
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_operator_transfer_flag(self, client):
         """Событие типа operator_transfer устанавливает transferred_to_operator флаг."""
         from test.conftest import TEST_TOKEN, TEST_USER, TEST_PASSWORD
@@ -342,7 +342,7 @@ class TestIngestOperatorTransfer:
 class TestIngestEventsCount:
     """Тесты накопления счётчика событий."""
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_events_count_accumulates(self, client):
         """Счётчик events_count накапливается при добавлении новых событий."""
         from test.conftest import TEST_TOKEN, TEST_USER, TEST_PASSWORD
@@ -400,7 +400,7 @@ class TestIngestEventsCount:
 class TestIngestLastState:
     """Тесты обновления last_state и последнего события."""
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_last_state_updated(self, client):
         """Поле last_state обновляется на последнее событие."""
         from test.conftest import TEST_TOKEN, TEST_USER, TEST_PASSWORD
@@ -439,7 +439,7 @@ class TestIngestLastState:
 class TestIngestEvents:
     """Тесты доступа к событиям через GET сессии."""
 
-    @pytest.mark.anyio
+    @pytest.mark.asyncio
     async def test_events_retrieved(self, client):
         """События доступны через GET /api/v1/sessions/{session_id}."""
         from test.conftest import TEST_TOKEN, TEST_USER, TEST_PASSWORD
