@@ -1,21 +1,19 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from fastapi.staticfiles import StaticFiles
 from app.database import init_db
 from app.api import health, ingest, sessions
 from app.ui import router as ui_router
+from app.tasks import start_background_tasks, stop_background_tasks
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Инициализация при запуске и очистка при остановке."""
-    # Startup
     await init_db()
+    start_background_tasks()
 
     yield
 
-    # Shutdown (заглушки для фоновых задач)
-    pass
+    await stop_background_tasks()
 
 
 app = FastAPI(
