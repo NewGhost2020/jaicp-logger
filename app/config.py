@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     basic_auth_pass_hash: str
     database_url: str = "sqlite+aiosqlite:///data/jaicp_logs.db"
     tz_display: str = "Europe/Moscow"
-    session_abandon_hours: int = 2
+    session_abandon_hours: float = 2
     retention_days: int = 30
     batches_retention_days: int = 7
 
