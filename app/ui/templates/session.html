@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Сессия — JAICP Логи{% endblock %}
+
+{% block content %}
+<h1>Сессия</h1>
+
+{% if session %}
+<h2><code>{{ session.id }}</code></h2>
+
+<div class="grid">
+    <div>
+        <strong>Бот:</strong> {{ session.bot_id }}
+    </div>
+    <div>
+        <strong>Статус:</strong> {{ session.status }}
+    </div>
+    <div>
+        <strong>Пользователь:</strong> {{ session.user_id or "—" }}
+    </div>
+    <div>
+        <strong>Канал:</strong> {{ session.channel_type or "—" }}
+    </div>
+</div>
+
+<hr>
+
+<h3>События</h3>
+
+{% if events %}
+<table>
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Тип</th>
+            <th>Состояние</th>
+            <th>Время</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for event in events %}
+        <tr>
+            <td>{{ event.seq }}</td>
+            <td><code>{{ event.type }}</code></td>
+            <td>{{ event.state or "—" }}</td>
+            <td>{{ event.ts }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p><em>Нет событий.</em></p>
+{% endif %}
+
+{% else %}
+<p><em>Сессия не найдена.</em></p>
+{% endif %}
+
+<p><a href="/">← Назад к сессиям</a></p>
+{% endblock %}

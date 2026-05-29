@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}JAICP Логи{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@1/css/pico.min.css">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <style>
+        body {
+            padding: 1rem;
+        }
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        nav {
+            margin-bottom: 2rem;
+        }
+        .breadcrumb {
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><strong><a href="/">JAICP Логи</a></strong></li>
+        </ul>
+        <ul>
+            <li><a href="/">Сессии</a></li>
+        </ul>
+    </nav>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Сессии — JAICP Логи{% endblock %}
+
+{% block content %}
+<h1>Сессии</h1>
+
+{% if sessions %}
+<table>
+    <thead>
+        <tr>
+            <th>ID сессии</th>
+            <th>Бот</th>
+            <th>Статус</th>
+            <th>Начало</th>
+            <th>События</th>
+            <th>Действие</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for session in sessions %}
+        <tr>
+            <td><code>{{ session.id }}</code></td>
+            <td>{{ session.bot_id }}</td>
+            <td>{{ session.status }}</td>
+            <td>{{ session.started_at }}</td>
+            <td>{{ session.events_count }}</td>
+            <td><a href="/session/{{ session.id }}">Просмотр</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p><em>Нет сессий.</em></p>
+{% endif %}
+{% endblock %}

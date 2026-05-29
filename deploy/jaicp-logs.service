@@ -1,0 +1,15 @@
+[Unit]
+Description=JAICP Logger Service
+After=network.target
+
+[Service]
+Type=notify
+User=jaicplogs
+WorkingDirectory=/opt/jaicp-logs
+EnvironmentFile=/opt/jaicp-logs/.env
+ExecStart=/opt/jaicp-logs/venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8765 --workers 1
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
