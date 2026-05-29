@@ -60,7 +60,7 @@
     </thead>
     <tbody>
         {% for s in sessions %}
-        <tr>
+        <tr class="{% if s.status == 'ended' %}row-ended{% elif s.status == 'abandoned' %}row-abandoned{% endif %}">
             <td><a href="/session/{{ s.id }}">{{ s.started_at_msk }}</a></td>
             <td>{{ s.duration_str }}</td>
             <td>{{ s.bot_id }}</td>
