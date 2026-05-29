@@ -39,9 +39,10 @@ env/
 .env.local
 .env.*.local
 
-# Data
-data/
-*.db
+# Data — директорию НЕ игнорируем целиком, чтобы .gitkeep попал в git
+data/*.db
+data/*.sqlite
+data/*.sqlite3
 *.sqlite
 *.sqlite3
 
@@ -50,4 +51,4 @@ logs/
 *.log
 
 # Alembic
-versions/
+# versions/ — не игнорируем, файлы миграций должны быть в git
