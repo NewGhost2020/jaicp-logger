@@ -5,11 +5,11 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 import app.database as db
-from app.models import sessions, events
+from app.models import sessions
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import and_, func, or_, select, exists
+from sqlalchemy import and_, func, or_, select, text
 
 from app.auth import verify_basic_auth
 
@@ -145,13 +145,14 @@ async def sessions_list(
         conditions.append(sessions.c.transferred_to_operator == 1)
     if search:
         pat = f"%{search}%"
+        # FTS5 phrase search: wrap in double-quotes, escape internal quotes
+        fts_term = '"' + search.replace('"', '""') + '"'
+        fts_q = text("SELECT session_id FROM events_fts WHERE events_fts MATCH :q").bindparams(q=fts_term)
         conditions.append(
             or_(
                 sessions.c.entry_query.like(pat),
                 sessions.c.user_from.like(pat),
-                exists().where(
-                    and_(events.c.session_id == sessions.c.id, events.c.data.like(pat))
-                ),
+                sessions.c.id.in_(fts_q),
             )
         )
 
