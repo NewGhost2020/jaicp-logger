@@ -5,7 +5,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 import app.database as db
-from app.models import sessions
+from app.models import sessions, events
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
