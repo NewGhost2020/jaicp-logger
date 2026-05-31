@@ -11,7 +11,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import and_, func, or_, select, text
 
-from app.auth import verify_basic_auth
+from app.auth import verify_basic_auth, get_bot_names
 
 templates_dir = Path(__file__).parent / "templates"
 templates = Jinja2Templates(directory=templates_dir)
@@ -176,6 +176,14 @@ async def sessions_list(
         rows = await conn.execute(data_query)
         session_list = [_row_to_session_dict(row) for row in rows]
 
+        # Список ботов для выпадашки: объединяем реестр имён и реально присутствующие в БД
+        bot_rows = await conn.execute(select(sessions.c.bot_id).distinct())
+        db_bot_ids = {r.bot_id for r in bot_rows if r.bot_id}
+
+    bot_names = get_bot_names()
+    all_bot_ids = sorted(db_bot_ids | set(bot_names.keys()))
+    bots = [{"id": bid, "name": bot_names.get(bid, bid)} for bid in all_bot_ids]
+
     filters = {
         "bot_id": bot_id,
         "from": from_dt,
@@ -209,6 +217,8 @@ async def sessions_list(
             "limit": limit,
             "offset": offset,
             "filters": filters,
+            "bots": bots,
+            "bot_names": bot_names,
             "from_default": from_default,
             "to_default": to_default,
             "pagination_prev": pagination_prev,

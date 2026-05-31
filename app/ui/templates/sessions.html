@@ -9,7 +9,12 @@
     <div class="grid">
         <label>
             Бот
-            <input type="text" name="bot_id" placeholder="Бот" value="{{ filters.bot_id or '' }}">
+            <select name="bot_id">
+                <option value="" {% if not filters.bot_id %}selected{% endif %}>Все боты</option>
+                {% for b in bots %}
+                <option value="{{ b.id }}" {% if filters.bot_id == b.id %}selected{% endif %}>{{ b.name }}</option>
+                {% endfor %}
+            </select>
         </label>
         <label>
             С
@@ -66,7 +71,7 @@
         <tr class="{% if s.status == 'ended' %}row-ended{% elif s.status == 'abandoned' %}row-abandoned{% endif %}">
             <td><a href="/session/{{ s.id }}">{{ s.started_at_msk }}</a></td>
             <td>{{ s.duration_str }}</td>
-            <td>{{ s.bot_id }}</td>
+            <td>{{ bot_names.get(s.bot_id, s.bot_id) }}</td>
             <td>{{ (s.user_from or s.user_id or '')[:20] }}</td>
             <td>{{ (s.entry_query or '')[:40] }}</td>
             <td>{{ s.events_count }}</td>

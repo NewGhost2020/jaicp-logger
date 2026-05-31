@@ -16,11 +16,20 @@ _MAX_BODY_BYTES = 256 * 1024  # 256 KB
 async def ingest_events(
     request: Request,
     body: IngestRequest,
-    token: str = Depends(verify_bot_token),
+    bound_bot_id: str = Depends(verify_bot_token),
 ):
+    from fastapi import HTTPException
+
+    # Токен жёстко привязан к bot_id: подделать чужой bot_id нельзя.
+    # '*' — legacy-общий токен, разрешает любой bot_id.
+    if bound_bot_id != "*" and body.bot_id != bound_bot_id:
+        raise HTTPException(
+            status_code=403,
+            detail="bot_id does not match token",
+        )
+
     if request.headers.get("content-length"):
         if int(request.headers["content-length"]) > _MAX_BODY_BYTES:
-            from fastapi import HTTPException
             raise HTTPException(status_code=413, detail="Batch too large (max 256 KB)")
 
     if db.engine is None:

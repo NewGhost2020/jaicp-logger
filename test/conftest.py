@@ -10,6 +10,7 @@ from app.auth import verify_bot_token, verify_basic_auth
 import app.database as db
 
 TEST_TOKEN = "test-secret-token"
+TEST_BOT_ID = "test-bot"
 TEST_USER = "testuser"
 TEST_PASSWORD = "testpassword"
 
@@ -44,12 +45,13 @@ async def client(setup_test_app):
     from app.main import app
     from fastapi import Header
 
-    # Мокаем auth — реальный bcrypt не нужен в unit-тестах
+    # Мокаем auth — реальный bcrypt не нужен в unit-тестах.
+    # Токен TEST_TOKEN привязан к bot_id TEST_BOT_ID (как в реальном реестре).
     async def _mock_bot_token(x_bot_token: str = Header(None)) -> str:
         if not x_bot_token or x_bot_token != TEST_TOKEN:
             from fastapi import HTTPException, status
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid bot token")
-        return x_bot_token
+        return TEST_BOT_ID
 
     async def _mock_basic_auth(authorization: str = Header(None)) -> str:
         import base64

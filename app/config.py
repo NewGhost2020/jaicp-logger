@@ -2,7 +2,8 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    log_ingest_token: str
+    log_ingest_token: str = ""  # legacy общий токен (wildcard), fallback
+    bot_tokens: str = "{}"  # JSON: {"bot_id": {"token": "...", "name": "..."}} или {"bot_id": "token"}
     basic_auth_user: str = ""
     basic_auth_pass_hash: str = ""
     basic_auth_users: str = "{}"  # JSON: {"login": "bcrypt_hash", ...}

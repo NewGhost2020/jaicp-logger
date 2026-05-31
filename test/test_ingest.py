@@ -72,6 +72,23 @@ class TestIngestAuth:
         )
         assert response.status_code == 401
 
+    @pytest.mark.asyncio
+    async def test_ingest_bot_id_must_match_token(self, client):
+        """Валидный токен, но чужой bot_id в теле → 403 (защита от подделки bot_id)."""
+        from test.conftest import TEST_TOKEN
+
+        batch = make_batch(
+            "test-session-x",
+            [make_event(0, "session_start", {"channelType": "telegram"})]
+        )
+        batch["bot_id"] = "someone-else"
+        response = await client.post(
+            "/api/v1/events",
+            json=batch,
+            headers={"X-Bot-Token": TEST_TOKEN}
+        )
+        assert response.status_code == 403
+
 
 class TestIngestSessionCreation:
     """Тесты создания сессии при ingest."""
